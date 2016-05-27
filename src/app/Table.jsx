@@ -20,21 +20,13 @@ export default class Table extends React.Component {
     this.lastScrollLeft = evt.target.scrollLeft;
     this.lastScrollTop = evt.target.scrollTop;
   }
-  componentDidMount(){
-    this.setState({rowswidth: (this.refs.table.offsetWidth-1)});
-  }
   render () {
-    console.log('rendered');
     const {definition, data, options} = this.props;
     return (
         <div ref={'table'} className={'table'} onScroll={this.handleTableSideScroll.bind(this)}>
           <div ref={'headers'} className={'headers'}>
             <div className={'fixedheaders'} style={{left: this.state.scroll}}>
-              {definition.map((header,i)=>{
-                if(i < options.frozen){
-                  return <Header key={i} {...header} options={options}/>
-                }
-              })}
+              {definition.slice(0,options.frozen).map((header,i)=><Header key={i} {...header} options={options}/>)}
             </div>
             {definition.map((header,i)=>{
               if(i < options.frozen){
@@ -49,11 +41,7 @@ export default class Table extends React.Component {
             {data.map((row,i)=>
               <Row key={i} options={options}>
                 <div className={'fixedcells'} style={{left: this.state.scroll}}>
-                  {row.map((cell,j)=>{
-                    if(j < options.frozen){
-                      return <Cell key={j} header={definition[j]} options={options}>{cell===''?'-':cell}</Cell>
-                    }
-                  })}
+                  {row.slice(0,options.frozen).map((cell,j)=><Cell key={j} header={definition[j]} options={options}>{cell===''?'-':cell}</Cell>)}
                 </div>
                 {row.map((cell,j)=>{
                   if(j < options.frozen){
