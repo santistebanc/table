@@ -13,7 +13,6 @@ export default class Table extends React.Component {
     this.lastScrollTop = 0;
   }
   handleTableSideScroll(evt){
-    const dist = evt.target.scrollLeft+evt.target.offsetWidth;
     if(evt.target.scrollTop == 0 && evt.target.scrollLeft !== this.lastScrollLeft){
       this.setState({rowswidth: (evt.target.scrollLeft+this.refs.table.offsetWidth), scroll: evt.target.scrollLeft})
     }
@@ -21,36 +20,35 @@ export default class Table extends React.Component {
     this.lastScrollTop = evt.target.scrollTop;
   }
   render () {
-    const {definition, data, options} = this.props;
+    const {columns, rows, frozen, headerHeight, bodyHeight, rowHeight} = this.props;
     return (
         <div ref={'table'} className={'table'} onScroll={this.handleTableSideScroll.bind(this)}>
           <div ref={'headers'} className={'headers'}>
             <div className={'fixedheaders'} style={{left: this.state.scroll}}>
-              {definition.slice(0,options.frozen).map((header,i)=><Header key={i} {...header} options={options}/>)}
+              {columns.slice(0,frozen).map((col,i)=><Header key={i} height={headerHeight} width={col.width}>{col.content}</Header>)}
             </div>
-            {definition.map((header,i)=>{
-              if(i < options.frozen){
-                return <Header key={i+'p'} width={header.width}><span>&nbsp;</span></Header>
+            {columns.map((col,i)=>{
+              if(i < frozen){
+                return <Header key={i+'p'} height={headerHeight} width={col.width}><div className={'headerContent'}>&nbsp;</div></Header>
               }else{
-                return <Header key={i} {...header} options={options}/>
+                return <Header key={i} height={headerHeight} width={col.width}>{col.content}</Header>
               }
             })}
-            <Header width={this.scrollbarsize} options={options}><span>&nbsp;</span></Header>
+            <Header height={headerHeight} width={this.scrollbarsize}><div className={'headerContent'}>&nbsp;</div></Header>
           </div>
-          <div ref={'rows'} className={'rows'} style={{width:this.state.rowswidth, height: this.props.options.bodyHeight}}>
-            {data.map((row,i)=>
-              <Row key={i} options={options}>
+          <div ref={'rows'} className={'rows'} style={{width:this.state.rowswidth, height: bodyHeight}}>
+            {rows.map((row,i)=>
+              <Row key={i} height={rowHeight}>
                 <div className={'fixedcells'} style={{left: this.state.scroll}}>
-                  {row.slice(0,options.frozen).map((cell,j)=><Cell key={j} header={definition[j]} options={options}>{cell===''?'-':cell}</Cell>)}
+                  {row.slice(0,frozen).map((cell,j)=><Cell key={j} height={rowHeight} width={columns[j].width}>{cell}</Cell>)}
                 </div>
                 {row.map((cell,j)=>{
-                  if(j < options.frozen){
-                    return <Cell key={j+'p'} header={{width: definition[j].width}} options={options}><span>&nbsp;</span></Cell>
+                  if(j < frozen){
+                    return <Cell key={j+'p'} height={rowHeight} width={columns[j].width}><div className={'cellContent'}>&nbsp;</div></Cell>
                   }else{
-                    return <Cell key={j} header={definition[j]} options={options}>{cell===''?'-':cell}</Cell>
+                    return <Cell key={j} height={rowHeight} width={columns[j].width}>{cell}</Cell>
                   }
                 })}
-                <Cell header={{width: this.scrollbarsize}} options={options}><span>&nbsp;</span></Cell>
               </Row>
             )}
           </div>
@@ -58,53 +56,38 @@ export default class Table extends React.Component {
     );
   }
 }
-Table.defaultProps = {
-  options:{}
-}
 
 class Header extends React.Component {
   render () {
-    const {name, width, options} = this.props;
+    const {width=defaultwidth, height} = this.props;
     return (
-      <div className={'header'} style={{width:width, height: options.headerHeight}}>
-        {this.props.children || name}
+      <div className={'header'} style={{width:width, height: height}}>
+        {this.props.children}
       </div>
     );
   }
-}
-Header.defaultProps = {
-  width: defaultwidth,
-  options:{}
 }
 
 class Row extends React.Component {
   render () {
-    const {options} = this.props;
+    const {height} = this.props;
     return (
-      <div className={'row'} style={{width:'100%', height: options.rowHeight}}>
+      <div className={'row'} style={{height: height}}>
         {this.props.children}
       </div>
     );
   }
-}
-Row.defaultProps = {
-  options:{}
 }
 
 class Cell extends React.Component {
   render () {
-    const {width} = this.props.header;
-    const {rowHeight} = this.props.options;
+    const {width=defaultwidth, height} = this.props;
     return (
-      <div className={'cell'} style={{width:width, height: rowHeight}}>
+      <div className={'cell'} style={{width:width, height: height}}>
         {this.props.children}
       </div>
     );
   }
-}
-Header.defaultProps = {
-  header: {},
-  options: {}
 }
 
 function getScrollbarWidth() {

@@ -21,6 +21,8 @@ app.use(require('webpack-dev-middleware')(compiler, {
 
 app.use('/img', express.static('img'));
 
+app.use('/font-awesome', express.static('font-awesome'));
+
 app.get('/countries', function(req, res) {
   res.sendFile(path.join(__dirname, 'src/countries.json'));
 });

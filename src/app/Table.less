@@ -17,7 +17,6 @@
   position: absolute;
 }
 .rows{
-  white-space: nowrap;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -31,14 +30,10 @@
 }
 .header{
   display:inline-block;
-  padding: 5px;
   background-color: lightgray;
-  font-weight: bold;
 }
 .cell{
   display:inline-block;
-  padding: 5px;
-  overflow: hidden;
   background-color: white;
 }
 
@@ -50,11 +45,6 @@
 .cell:first-child{
   border-left: @borderSize solid @borderColor;
 }
-
-.row{
-
-}
-
 .header{
   border-right: @borderSize solid @borderColor;
 }
