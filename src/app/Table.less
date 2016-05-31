@@ -1,5 +1,6 @@
 @borderSize: 1px;
-@borderColor: gray;
+@borderColor: lightgray;
+@borderColorHeader: gray;
 
 
 .table{
@@ -24,6 +25,7 @@
 .row{
   position: relative;
   white-space: nowrap;
+  background-color: white;
 }
 .header{
   display:inline-block;
@@ -32,8 +34,13 @@
 }
 .cell{
   display:inline-block;
-  background-color: white;
   overflow: hidden;
+}
+.row:nth-child(even){
+  background-color: #eee;
+}
+.row:hover >.cell{
+  background-color: linen;
 }
 
 //borders
@@ -45,7 +52,7 @@
   border-left: @borderSize solid @borderColor;
 }
 .header{
-  border-right: @borderSize solid @borderColor;
+  border-right: @borderSize solid @borderColorHeader;
 }
 .header:first-child{
   border-left: @borderSize solid @borderColor;
@@ -56,8 +63,8 @@
   box-sizing: content-box;
 }
 .rows{
-  border-top: @borderSize solid @borderColor;
+  border-top: @borderSize solid @borderColorHeader;
 }
 .table{
-  border-top: @borderSize solid @borderColor;
+  border-top: @borderSize solid @borderColorHeader;
 }

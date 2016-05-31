@@ -63,23 +63,19 @@ export default class TableUIComponent extends React.Component {
   }
   handleChangePage(page){
     this.getTableData({currentpage:page, callback:()=>{
-      this.state.currentpage = page;
-      this.setState({currentpage: this.state.currentpage});
+      this.setState({currentpage: page});
     }});
   }
   handleChangeSelectedOptionShow(evt){
     const ps = parseInt(evt.target.value);
     this.setState({selectedOptionShow: parseInt(evt.target.value)});
     this.getTableData({currentpage:0,pageSize:ps,callback:()=>{
-      this.state.currentpage = 0;
-      this.state.pageSize = ps;
-      this.setState(this.state);
+      this.setState({currentpage:0,pageSize:ps});
     }});
   }
   handleChangeSearchQuery(query){
     this.getTableData({currentpage:0,filterquery:query,callback:()=>{
-      this.state.filterquery = query;
-      this.setState({filterquery: this.state.filterquery, currentpage: 0});
+      this.setState({filterquery: query, currentpage: 0});
     }});
   }
   componentDidMount(){
@@ -139,14 +135,14 @@ export default class TableUIComponent extends React.Component {
   renderColumns(){
     const def = this.props.definition;
     const cont = (d,i)=>{// this is where the headers can be customized
-      if(d.name===''){
-        return <div className={'headerContent'}>&nbsp;</div>
-      }else{
-        return <div><div className={'headerContent'} style={{display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}} title={d.name}>{d.name}</div>
-        <SortController mode={this.state.sortModes[i]} onChange={this.handleChangeSortMode.bind(this,i)}
-          style={{display: 'inline-block', float: 'right', height: this.state.headerHeight, padding:'3px'}}/>
-        </div>
+      let sortc;
+      if(d.type!='flag'){
+        sortc = <SortController mode={this.state.sortModes[i]} onChange={this.handleChangeSortMode.bind(this,i)} style={{display: 'inline-block', float: 'right', height: this.state.headerHeight, padding:'3px'}}/>
       }
+      return <div className={'headerContent'}>
+        <div style={{padding: 5, height: '100%', display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}} title={d.name}>{d.name}</div>
+        {sortc}
+      </div>
     }
     return def.map((d,i)=>{return {width:d.width, content:cont(d,i)}});
   }
@@ -157,25 +153,31 @@ export default class TableUIComponent extends React.Component {
       switch(this.props.definition[j].type){ //here is where you create your own custom types
         case 'id':
         inside = <div className={'cellContent'}
-          style={{textAlign:'right', color:'DodgerBlue', fontWeight: 'bold', backgroundColor:'Lavender'}} title={cell}>{cell}</div>
+          style={{padding: '10px 5px', textAlign:'right', color:'DodgerBlue', fontWeight: 'bold', backgroundColor:'Lavender'}} title={cell}>{cell}</div>
         break;
         case 'string':
         inside = <div className={'cellContent'}
-          style={{textOverflow: 'ellipsis',overflow: 'hidden'}} title={cell}>{cell}</div>
+          style={{padding: '10px 5px', textOverflow: 'ellipsis',overflow: 'hidden'}} title={cell}>{cell}</div>
         break;
         case 'amount':
         inside = <div className={'cellContent'}
-          style={{textAlign:'right'}} title={cell}>{formatAmount(cell)}</div>
+          style={{padding: '10px 5px', textAlign:'right'}} title={cell}>{formatAmount(cell)}</div>
         break;
         case 'areakm2':
         inside = <div className={'cellContent'}
-          style={{textAlign:'right'}} title={cell}>{formatAmount(cell)}{' km'}<sup>2</sup></div>
+          style={{padding: '8px 5px', textAlign:'right'}} title={cell}>{formatAmount(cell)}{' km'}<sup>2</sup></div>
+        break;
+        case 'flag':
+        inside = <div className={'cellContent'} style={{padding: 5}}
+          title={cell}><div style={{width: '100%',height: '100%',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            backgroundImage: 'url("http://flags.fmcdn.net/data/flags/normal/'+ cell.trim().toLowerCase() +'.png")'}}/></div>
         break;
         default:
         inside = <div className={'cellContent'}
           title={cell}>{cell}</div>
       }
-
       return inside;
     }
     return rows.map((row,i)=>row.map(cells));
