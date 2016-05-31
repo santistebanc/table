@@ -23,8 +23,8 @@ export default class Table extends React.Component {
     const {columns, rows, frozen, headerHeight, bodyHeight, rowHeight} = this.props;
     return (
         <div ref={'table'} className={'table'} onScroll={this.handleTableSideScroll.bind(this)}>
-          <div ref={'headers'} className={'headers'}>
-            <div className={'fixedheaders'} style={{left: this.state.scroll}}>
+          <div ref={'headers'} className={'headers'} style={{height: headerHeight}}>
+            <div className={'fixedheaders'} style={{left: this.state.scroll, height: headerHeight}}>
               {columns.slice(0,frozen).map((col,i)=><Header key={i} height={headerHeight} width={col.width}>{col.content}</Header>)}
             </div>
             {columns.map((col,i)=>{

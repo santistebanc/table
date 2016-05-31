@@ -11,7 +11,7 @@ export default class PaginationIndex extends React.Component {
     this.props.onChange(page);
   }
   render () {
-    const {current, pageSize, totalsize} = this.props;
+    const {current, pageSize, totalsize, style} = this.props;
     let numbers = [];
     const range = this.props.range>=3?this.props.range:3;
     let num = (inside,i)=><li key={i}><a className={'pagenumber '+(current==i?'active':'')} onClick={this.handleClick.bind(this,i)}>{inside}</a></li>;
@@ -28,7 +28,7 @@ export default class PaginationIndex extends React.Component {
       numbers.push(num(i+1,i));
     }
     const lastnumber = num(Math.floor(totalsize/pageSize)+1,Math.floor(totalsize/pageSize));
-    return <div className={'pagination'}>
+    return <div className={'pagination'} style={style}>
       <ul>
         <li><a onClick={this.handleClick.bind(this,(current > 0?current-1:current))}>{'«'}</a></li>
         {first > 0?num(1,0):''}

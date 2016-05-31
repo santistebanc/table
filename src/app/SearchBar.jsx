@@ -13,7 +13,7 @@ export default class SearchBar extends React.Component {
   }
   render () {
     //const {current, pagesize, totalsize} = this.props;
-    return <div className={'searchbar'}>
+    return <div className={'searchbar'} style={this.props.style}>
         <input type="text" placeholder="Search.." value={this.state.query} onChange={this.handleChangeQuery.bind(this)}/>
     </div>
   }

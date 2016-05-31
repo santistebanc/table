@@ -9,11 +9,9 @@
 }
 .headers{
   position: relative;
-  display:inline-block;
   white-space: nowrap;
 }
 .fixedheaders{
-  display:inline-block;
   position: absolute;
 }
 .rows{
@@ -21,7 +19,6 @@
   overflow-x: hidden;
 }
 .fixedcells{
-  display:inline-block;
   position: absolute;
 }
 .row{
@@ -31,10 +28,12 @@
 .header{
   display:inline-block;
   background-color: lightgray;
+  overflow: hidden;
 }
 .cell{
   display:inline-block;
   background-color: white;
+  overflow: hidden;
 }
 
 //borders
@@ -52,6 +51,13 @@
   border-left: @borderSize solid @borderColor;
 }
 .headers{
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+.rows{
   border-top: @borderSize solid @borderColor;
-  border-bottom: @borderSize solid @borderColor;
+}
+.table{
+  border-top: @borderSize solid @borderColor;
 }

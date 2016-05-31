@@ -24,7 +24,13 @@ app.use('/img', express.static('img'));
 app.use('/font-awesome', express.static('font-awesome'));
 
 app.get('/countries', function(req, res) {
-  res.sendFile(path.join(__dirname, 'src/countries.json'));
+    res.sendFile(path.join(__dirname, 'src/countries.json'));
+});
+
+app.get('/countries/slow', function(req, res) {
+  setTimeout((function() {
+    res.sendFile(path.join(__dirname, 'src/countries.json'));
+  }), 1000);
 });
 
 app.get('/', function(req, res) {
