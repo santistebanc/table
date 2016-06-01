@@ -14,11 +14,11 @@ class Index extends React.Component {
     this.state = {tabledata: {
       backend: '/countries/slow',
       definition: def,
-      selector: (d,i)=>[i,d.cca2,d.name.common,d.name.official,d.capital,d.area],
+      selection: (d,i)=>[i,d.cca2,d.name.common,d.name.official,d.capital,d.area],
       headerHeight: 30,
       bodyHeight: 400,
       rowHeight: 38,
-      frozen:1,
+      frozen:2,
       pageSize: 25}};
   }
   render () {

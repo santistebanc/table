@@ -25,7 +25,7 @@ export default class TableUIComponent extends React.Component {
   getTableData({pageSize=this.state.pageSize, currentpage=this.state.currentpage, filterquery=this.state.filterquery, sortModes=this.state.sortModes, callback=()=>{}}){
     //here you would send to the server the query arguments for filtering, sorting, etc
 
-    let filtereddata;
+    let sorteddata;
     this.callid ++;
     this.setState({loading: true});
     console.log('calling backend',this.callid);
@@ -33,23 +33,39 @@ export default class TableUIComponent extends React.Component {
 
     function loadedData(num,newdata){
       console.log('call successful',num,this.callid);
-      if(num == this.callid){
-        const selecteddata = JSON.parse(newdata).map(this.props.selector); //select the columns to display
+      if(num == this.callid){ //callid used to prevent inconsistent loading of content due to different speeds of server responses
+        this.callid = 0;
+        const selecteddata = JSON.parse(newdata).map(this.props.selection); //select the columns to display
         this.state.loading = false;
         //if offline filtering enabled
         this.state.data = offlineFormating(selecteddata);
-        this.state.rowsamount = filtereddata.length;
+        this.state.rowsamount = sorteddata.length;
         this.setState(this.state);
         callback();
       }
     }
 
     function offlineFormating(data){
-      filtereddata = filterquery?data.filter(containsquery):data;  //filter data according to search query
+      const filtereddata = filterquery?data.filter(containsquery):data;  //filter data according to search query
+      const dir = sortModes.indexOf(1)>-1?1:-1;
+      const field = sortModes.indexOf(1)>-1?sortModes.indexOf(1):sortModes.indexOf(2);
+      if(field>-1){
+        sorteddata = filtereddata.sort((a,b)=>{
+          console.log('sorting', dir, field)
+          if (a[field] < b[field])
+            return -1*dir;
+          else if (a[field] > b[field])
+            return 1*dir;
+          else
+            return 0;
+        });
+      }else{
+        sorteddata = filtereddata
+      }
       return filtereddata.slice(pageSize*currentpage,pageSize*(currentpage+1));  //limit data to only amount specified in page
     }
 
-    function containsquery(value){
+    function containsquery(value){ //function to look for matching ocurrences on the search query
       for(let i=0;i < value.length;i++){
         if(value[i].toString().toLowerCase().trim().indexOf(filterquery.toLowerCase().trim()) > -1) return true;
       }
@@ -60,6 +76,7 @@ export default class TableUIComponent extends React.Component {
     this.state.sortModes = this.state.sortModes.map(s=>0);
     this.state.sortModes[c] = newvalue;
     this.setState({sortModes: this.state.sortModes});
+    this.getTableData({sortModes:this.state.sortModes, callback:()=>{}});
   }
   handleChangePage(page){
     this.getTableData({currentpage:page, callback:()=>{
@@ -77,6 +94,9 @@ export default class TableUIComponent extends React.Component {
     this.getTableData({currentpage:0,filterquery:query,callback:()=>{
       this.setState({filterquery: query, currentpage: 0});
     }});
+  }
+  handleClickCell({cell, rownum}){
+    console.log('You clicked: ', cell, ' in row ',rownum)
   }
   componentDidMount(){
     this.getTableData(this.state.pageSize,this.state.currentpage);
@@ -148,39 +168,41 @@ export default class TableUIComponent extends React.Component {
   }
   renderRows(){
     const rows = this.state.data;
-    const cells = (cell,j)=>{
-      let inside;
-      switch(this.props.definition[j].type){ //here is where you create your own custom types
-        case 'id':
-        inside = <div className={'cellContent'}
-          style={{padding: '10px 5px', textAlign:'right', color:'DodgerBlue', fontWeight: 'bold', backgroundColor:'Lavender'}} title={cell}>{cell}</div>
-        break;
-        case 'string':
-        inside = <div className={'cellContent'}
-          style={{padding: '10px 5px', textOverflow: 'ellipsis',overflow: 'hidden'}} title={cell}>{cell}</div>
-        break;
-        case 'amount':
-        inside = <div className={'cellContent'}
-          style={{padding: '10px 5px', textAlign:'right'}} title={cell}>{formatAmount(cell)}</div>
-        break;
-        case 'areakm2':
-        inside = <div className={'cellContent'}
-          style={{padding: '8px 5px', textAlign:'right'}} title={cell}>{formatAmount(cell)}{' km'}<sup>2</sup></div>
-        break;
-        case 'flag':
-        inside = <div className={'cellContent'} style={{padding: 5}}
-          title={cell}><div style={{width: '100%',height: '100%',
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            backgroundImage: 'url("http://flags.fmcdn.net/data/flags/normal/'+ cell.trim().toLowerCase() +'.png")'}}/></div>
-        break;
-        default:
-        inside = <div className={'cellContent'}
-          title={cell}>{cell}</div>
+    return rows.map((row,i)=>row.map(
+      (cell,j)=>{
+        let inside;
+        switch(this.props.definition[j].type){ //here is where you create your own custom types
+          case 'id':
+          inside = <div className={'cellContent'} onClick={this.handleClickCell.bind(this,{cell:cell, rownum:i})}
+            style={{padding: '10px 5px', textAlign:'right', color:'DodgerBlue', fontWeight: 'bold', backgroundColor:'Lavender'}} title={cell}>{cell}</div>
+          break;
+          case 'string':
+          inside = <div className={'cellContent'} onClick={this.handleClickCell.bind(this,{cell:cell, rownum:i})}
+            style={{padding: '10px 5px', textOverflow: 'ellipsis',overflow: 'hidden'}} title={cell}>{cell}</div>
+          break;
+          case 'amount':
+          inside = <div className={'cellContent'} onClick={this.handleClickCell.bind(this,{cell:cell, rownum:i})}
+            style={{padding: '10px 5px', textAlign:'right'}} title={cell}>{formatAmount(cell)}</div>
+          break;
+          case 'areakm2':
+          inside = <div className={'cellContent'} onClick={this.handleClickCell.bind(this,{cell:cell, rownum:i})}
+            style={{padding: '8px 5px', textAlign:'right'}} title={cell}>{formatAmount(cell)}{' km'}<sup>2</sup></div>
+          break;
+          case 'flag':
+          inside = <div className={'cellContent'} onClick={this.handleClickCell.bind(this,{cell:cell, rownum:i})}
+            style={{padding: 5}}
+            title={cell}><div style={{width: '100%',height: '100%',
+              backgroundSize: 'cover',
+              backgroundRepeat: 'no-repeat',
+              backgroundImage: 'url("http://flags.fmcdn.net/data/flags/normal/'+ cell.trim().toLowerCase() +'.png")'}}/></div>
+          break;
+          default:
+          inside = <div className={'cellContent'}
+            title={cell}>{cell}</div>
+        }
+        return inside;
       }
-      return inside;
-    }
-    return rows.map((row,i)=>row.map(cells));
+    ));
   }
 }
 

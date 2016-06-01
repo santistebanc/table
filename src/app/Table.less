@@ -21,6 +21,7 @@
 }
 .fixedcells{
   position: absolute;
+  background-color: white;
 }
 .row{
   position: relative;
@@ -39,7 +40,13 @@
 .row:nth-child(even){
   background-color: #eee;
 }
+.row:nth-child(even) >.fixedcells{
+  background-color: #eee;
+}
 .row:hover >.cell{
+  background-color: linen;
+}
+.row:hover >.fixedcells{
   background-color: linen;
 }
 
