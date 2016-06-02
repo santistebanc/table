@@ -12,7 +12,6 @@ export default class CheckBoxList extends React.Component {
   }
   render () {
     const {names, values, style} = this.props;
-    console.log(names);
     return <div className={'checkboxlist'} style={style}>
         {names.map((name,idx)=><div><input key={idx} type="checkbox" checked={values.indexOf(idx)>-1} value={name} onChange={this.handleChangeCheckBox.bind(this,idx)}/>{name}</div>)}
     </div>

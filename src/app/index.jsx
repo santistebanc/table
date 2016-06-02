@@ -7,24 +7,25 @@ class Index extends React.Component {
     super(props);
     let def = [{name:'Id', type:'id', width: 45},
     {name:'Flag', type:'flag', width: 50},
-    {name:'Country', type:'string', width: 300},
-    {name:'Official Name', type:'string', width: 300},
-    {name:'Capital', type:'string', width: 150},
-    {name:'Area', type:'areakm2', width: 150}];
+    {name:'Country', type:'string', width: '20%'},
+    {name:'Official Name', type:'string', width: '50%'},
+    {name:'Capital', type:'string', width: '15%'},
+    {name:'Area', type:'areakm2', width: '15%'}];
     this.state = {tabledata: {
       backend: '/countries/slow',
       definition: def,
       selection: (d,i)=>[i,d.cca2,d.name.common,d.name.official,d.capital,d.area],
       headerHeight: 30,
       bodyHeight: 400,
+      tableWidth: 1000,
       rowHeight: 38,
-      frozen:1,
+      frozen:2,
       pageSize: 25}};
   }
   render () {
     return (<div>
       <p> Table!</p>
-      <div style={{width: '80%', margin:'0 auto'}}>
+      <div style={{margin:'0 auto',width: 1000}}>
         <TableUIComponent {...this.state.tabledata} />
       </div>
     </div>);

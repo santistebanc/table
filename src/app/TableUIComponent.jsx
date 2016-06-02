@@ -16,33 +16,34 @@ export default class TableUIComponent extends React.Component {
       headerHeight: props.headerHeight,
       rowHeight: props.rowHeight,
       bodyHeight: props.bodyHeight,
+      tableWidth: props.tableWidth,
       frozen: props.frozen,
       pageSize: props.pageSize,
       currentpage: 0,
       rowsamount: 0,
       sortModes:props.definition.map(d=>{}),
       selectedColumns: props.definition.map((d,i)=>i),
-      showColumnsCheckList: false}
+      showColumnsCheckList: false,
+      scrollBarWidth: getScrollbarWidth(),
+      showSideScroll: true}
       this.callid = 0;
   }
   getTableData({pageSize=this.state.pageSize, currentpage=this.state.currentpage, filterquery=this.state.filterquery, sortModes=this.state.sortModes, callback=()=>{}}){
     //here you would send to the server the query arguments for filtering, sorting, etc
-    console.log('heer')
     let sorteddata;
     this.callid ++;
     this.setState({loading: true});
-    console.log('calling backend',this.callid);
     callAjax(this.props.backend, loadedData.bind(this,this.callid));
 
     function loadedData(num,newdata){
-      console.log('call successful',num,this.callid);
       if(num == this.callid){ //callid used to prevent inconsistent loading of content due to different speeds of server responses
         this.callid = 0;
 
         const selectionFiltered = (d,i)=>this.props.selection(d,i).filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
         const selecteddata = JSON.parse(newdata).map(selectionFiltered); //select the columns to display
         this.state.loading = false; //data has been retrieved, no more loding
-        this.state.headers = this.props.definition.filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
+        const unfixedheaders = this.props.definition.filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
+        this.state.headers = this.fixRelativeWidths(unfixedheaders);
         this.state.data = offlineFormating(selecteddata);
         this.state.rowsamount = sorteddata.length;
         this.setState(this.state);
@@ -56,7 +57,6 @@ export default class TableUIComponent extends React.Component {
       const field = sortModes.indexOf(1)>-1?sortModes.indexOf(1):sortModes.indexOf(2);
       if(field>-1){
         sorteddata = filtereddata.sort((a,b)=>{
-          console.log('sorting', dir, field)
           if (a[field] < b[field])
             return -1*dir;
           else if (a[field] > b[field])
@@ -75,6 +75,16 @@ export default class TableUIComponent extends React.Component {
         if(value[i].toString().toLowerCase().trim().indexOf(filterquery.toLowerCase().trim()) > -1) return true;
       }
     }
+  }
+  fixRelativeWidths(headers){
+    this.remainingwidth = this.state.tableWidth-headers.reduce((p,c)=>p+(isNaN(c.width)?0:c.width),0)-this.state.scrollBarWidth;
+    return headers.map((header,i)=>{
+      if(header.width.toString().indexOf('%')>-1){
+        console.log(header.width,this.remainingwidth*parseInt(header.width.slice(0,-1))/100)
+        header.width = this.remainingwidth>0?this.remainingwidth*parseInt(header.width.slice(0,-1))/100:0;
+      }
+      return header;
+    });
   }
   handleChangeSortMode(c){
     const newvalue = ((this.state.sortModes[c]||0)+1)%3;
@@ -97,7 +107,6 @@ export default class TableUIComponent extends React.Component {
   }
   handleChangeSelectedColumns(evt){
     const cols = evt.target.value;
-    console.log(evt.target.value);
     this.setState({selectedColumns: cols});
     //this.getTableData({selectedColumns: cols,callback:()=>{}});
   }
@@ -107,7 +116,6 @@ export default class TableUIComponent extends React.Component {
     }});
   }
   handleDoubleClickHeader(col){
-    console.log('there2');
     this.setState({frozen: col});
   }
   handleClickCell({cell, rownum}){
@@ -126,7 +134,6 @@ export default class TableUIComponent extends React.Component {
     this.getTableData({});
   }
   render () {
-    console.log('rendering');
 
     const {pageSize, currentpage, rowsamount} = this.state;
 
@@ -145,7 +152,7 @@ export default class TableUIComponent extends React.Component {
     }
 
     return (
-      <div style={{width: '80%', margin:'0 auto', height: 400}}>
+      <div>
         <div>
           <div style={{display:'inline-block', padding:5}}>{'Show '}
             <select value={this.state.selectedOptionShow} onChange={this.handleChangeSelectedOptionShow.bind(this)}>
@@ -169,7 +176,11 @@ export default class TableUIComponent extends React.Component {
           frozen={this.state.frozen}
           headerHeight={this.state.headerHeight}
           rowHeight={this.state.rowHeight}
-          bodyHeight={this.state.bodyHeight} />
+          bodyHeight={this.state.bodyHeight}
+          tableWidth={this.state.tableWidth}
+          scrollBarWidth={this.state.scrollBarWidth}
+          showSideScroll={this.state.showSideScroll}
+          />
         </div>
         <div>
         <div style={{display:'inline-block', padding:5}}>{showmessage}</div>
@@ -236,6 +247,8 @@ export default class TableUIComponent extends React.Component {
   }
 }
 
+//library functions
+
 function formatAmount(num, s=' ', n=0){
   const re = '\\d(?=(\\d{3})+' + (n > 0 ? '\\.' : '$') + ')';
   return num.toFixed(Math.max(0, ~~n)).replace(new RegExp(re, 'g'), '$&'+s);
@@ -252,4 +265,29 @@ function callAjax(url, callback){ //replace this with custom ajax caller
     }
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
+}
+
+function getScrollbarWidth() {
+    var outer = document.createElement("div");
+    outer.style.visibility = "hidden";
+    outer.style.width = "100px";
+    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+    document.body.appendChild(outer);
+
+    var widthNoScroll = outer.offsetWidth;
+    // force scrollbars
+    outer.style.overflow = "scroll";
+
+    // add innerdiv
+    var inner = document.createElement("div");
+    inner.style.width = "100%";
+    outer.appendChild(inner);
+
+    var widthWithScroll = inner.offsetWidth;
+
+    // remove divs
+    outer.parentNode.removeChild(outer);
+
+    return widthNoScroll - widthWithScroll;
 }

@@ -8,7 +8,6 @@ export default class Table extends React.Component {
   constructor(props){
     super(props);
     this.state = {scroll: 0};
-    this.scrollbarsize = getScrollbarWidth()+1;
     this.lastScrollLeft = 0;
     this.lastScrollTop = 0;
   }
@@ -20,9 +19,10 @@ export default class Table extends React.Component {
     this.lastScrollTop = evt.target.scrollTop;
   }
   render () {
-    const {columns, rows, frozen, headerHeight, bodyHeight, rowHeight} = this.props;
+    const {columns, rows, frozen, headerHeight, bodyHeight, tableWidth, rowHeight, showSideScroll, scrollBarWidth} = this.props;
+
     return (
-        <div ref={'table'} className={'table'} onScroll={this.handleTableSideScroll.bind(this)}>
+        <div ref={'table'} className={'table'} onScroll={this.handleTableSideScroll.bind(this)} style={{width: tableWidth}}>
           <div ref={'headers'} className={'headers'} style={{height: headerHeight}}>
             <div className={'fixedheaders'} style={{left: this.state.scroll, height: headerHeight}}>
               {columns.slice(0,frozen).map((col,i)=><Header key={i} height={headerHeight} width={col.width}>{col.content}</Header>)}
@@ -34,7 +34,7 @@ export default class Table extends React.Component {
                 return <Header key={i} height={headerHeight} width={col.width}>{col.content}</Header>
               }
             })}
-            <Header height={headerHeight} width={this.scrollbarsize}><div className={'headerContent'}>&nbsp;</div></Header>
+            {showSideScroll && <Header height={headerHeight} width={scrollBarWidth}><div className={'headerContent'}>&nbsp;</div></Header>}
           </div>
           <div ref={'rows'} className={'rows'} style={{width:this.state.rowswidth, height: bodyHeight}}>
             {rows.map((row,i)=>
@@ -88,29 +88,4 @@ class Cell extends React.Component {
       </div>
     );
   }
-}
-
-function getScrollbarWidth() {
-    var outer = document.createElement("div");
-    outer.style.visibility = "hidden";
-    outer.style.width = "100px";
-    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
-
-    document.body.appendChild(outer);
-
-    var widthNoScroll = outer.offsetWidth;
-    // force scrollbars
-    outer.style.overflow = "scroll";
-
-    // add innerdiv
-    var inner = document.createElement("div");
-    inner.style.width = "100%";
-    outer.appendChild(inner);
-
-    var widthWithScroll = inner.offsetWidth;
-
-    // remove divs
-    outer.parentNode.removeChild(outer);
-
-    return widthNoScroll - widthWithScroll;
 }
