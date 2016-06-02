@@ -3,13 +3,14 @@ import Table from './Table.jsx';
 import PaginationIndex from './PaginationIndex.jsx';
 import SearchBar from './SearchBar.jsx';
 import SortController from './SortController.jsx'
+import CheckBoxList from './CheckBoxList.jsx'
 
 require('./TableUIComponent.less');
 
 export default class TableUIComponent extends React.Component {
   constructor(props){
     super(props);
-    this.state = {data: [],
+    this.state = {data: [], headers: [],
       loading: true,
       selectedOptionShow: props.pageSize,
       headerHeight: props.headerHeight,
@@ -19,12 +20,14 @@ export default class TableUIComponent extends React.Component {
       pageSize: props.pageSize,
       currentpage: 0,
       rowsamount: 0,
-      sortModes:props.definition.map(d=>{})}
+      sortModes:props.definition.map(d=>{}),
+      selectedColumns: props.definition.map((d,i)=>i),
+      showColumnsCheckList: false}
       this.callid = 0;
   }
   getTableData({pageSize=this.state.pageSize, currentpage=this.state.currentpage, filterquery=this.state.filterquery, sortModes=this.state.sortModes, callback=()=>{}}){
     //here you would send to the server the query arguments for filtering, sorting, etc
-
+    console.log('heer')
     let sorteddata;
     this.callid ++;
     this.setState({loading: true});
@@ -35,9 +38,11 @@ export default class TableUIComponent extends React.Component {
       console.log('call successful',num,this.callid);
       if(num == this.callid){ //callid used to prevent inconsistent loading of content due to different speeds of server responses
         this.callid = 0;
-        const selecteddata = JSON.parse(newdata).map(this.props.selection); //select the columns to display
-        this.state.loading = false;
-        //if offline filtering enabled
+
+        const selectionFiltered = (d,i)=>this.props.selection(d,i).filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
+        const selecteddata = JSON.parse(newdata).map(selectionFiltered); //select the columns to display
+        this.state.loading = false; //data has been retrieved, no more loding
+        this.state.headers = this.props.definition.filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
         this.state.data = offlineFormating(selecteddata);
         this.state.rowsamount = sorteddata.length;
         this.setState(this.state);
@@ -76,7 +81,7 @@ export default class TableUIComponent extends React.Component {
     this.state.sortModes = this.state.sortModes.map(s=>0);
     this.state.sortModes[c] = newvalue;
     this.setState({sortModes: this.state.sortModes});
-    this.getTableData({sortModes:this.state.sortModes, callback:()=>{}});
+    this.getTableData({sortModes:this.state.sortModes});
   }
   handleChangePage(page){
     this.getTableData({currentpage:page, callback:()=>{
@@ -85,21 +90,40 @@ export default class TableUIComponent extends React.Component {
   }
   handleChangeSelectedOptionShow(evt){
     const ps = parseInt(evt.target.value);
-    this.setState({selectedOptionShow: parseInt(evt.target.value)});
+    this.setState({selectedOptionShow: ps});
     this.getTableData({currentpage:0,pageSize:ps,callback:()=>{
       this.setState({currentpage:0,pageSize:ps});
     }});
+  }
+  handleChangeSelectedColumns(evt){
+    const cols = evt.target.value;
+    console.log(evt.target.value);
+    this.setState({selectedColumns: cols});
+    //this.getTableData({selectedColumns: cols,callback:()=>{}});
   }
   handleChangeSearchQuery(query){
     this.getTableData({currentpage:0,filterquery:query,callback:()=>{
       this.setState({filterquery: query, currentpage: 0});
     }});
   }
+  handleDoubleClickHeader(col){
+    console.log('there2');
+    this.setState({frozen: col});
+  }
   handleClickCell({cell, rownum}){
     console.log('You clicked: ', cell, ' in row ',rownum)
   }
+  handleChangeCheckBoxList(idx,val){
+    if(this.state.selectedColumns.indexOf(idx)>-1 && !val){
+      this.state.selectedColumns.splice(this.state.selectedColumns.indexOf(idx), 1);
+    }else if(val){
+      this.state.selectedColumns.push(idx);
+    }
+    this.setState(this.state);
+    this.getTableData({});
+  }
   componentDidMount(){
-    this.getTableData(this.state.pageSize,this.state.currentpage);
+    this.getTableData({});
   }
   render () {
     console.log('rendering');
@@ -116,6 +140,10 @@ export default class TableUIComponent extends React.Component {
       showmessage = <span>{'Showing '}{pageSize*currentpage+1}{' to '}{rowsamount>pageSize*(currentpage+1)?pageSize*(currentpage+1):rowsamount}{' of '}{rowsamount}{' entries'}</span>
     }
 
+    function clickColumnsBut(){
+      this.setState({showColumnsCheckList: !this.state.showColumnsCheckList});
+    }
+
     return (
       <div style={{width: '80%', margin:'0 auto', height: 400}}>
         <div>
@@ -126,6 +154,8 @@ export default class TableUIComponent extends React.Component {
               <option value="50">50</option>
               <option value="100">100</option>
             </select>{' entries'}</div>
+          <div style={{display:'inline-block', padding:3, float:'left'}}>
+            <button onClick={clickColumnsBut.bind(this)}>Columns</button></div>
           <div style={{display:'inline-block', padding:5, float:'right',width: 110, textAlign: 'right'}}>{this.state.loading?
               <span><i className="fa fa-circle-o-notch fa-spin fa-fw"></i>{'Loading...'}</span>
               :
@@ -133,6 +163,7 @@ export default class TableUIComponent extends React.Component {
           </div>
           <SearchBar style={{float:'right'}} onChange={this.handleChangeSearchQuery.bind(this)}/>
         </div>
+        {this.state.showColumnsCheckList && <CheckBoxList names={this.props.definition.map(d=>d.name)} values={this.state.selectedColumns} onChange={this.handleChangeCheckBoxList.bind(this)}/>}
         <div style={{padding:5}}>
         <Table rows={rows} columns={columns}
           frozen={this.state.frozen}
@@ -153,25 +184,24 @@ export default class TableUIComponent extends React.Component {
     );
   }
   renderColumns(){
-    const def = this.props.definition;
     const cont = (d,i)=>{// this is where the headers can be customized
       let sortc;
       if(d.type!='flag'){
-        sortc = <SortController mode={this.state.sortModes[i]} onChange={this.handleChangeSortMode.bind(this,i)} style={{display: 'inline-block', float: 'right', height: this.state.headerHeight, padding:'3px'}}/>
+        sortc = <SortController mode={this.state.sortModes[i]} onChange={this.handleChangeSortMode.bind(this,i)} style={{height: this.state.headerHeight}}/>
       }
-      return <div className={'headerContent'}>
-        <div style={{padding: 5, height: '100%', display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}} title={d.name}>{d.name}</div>
+      return <div className={'headerContent'} title={d.name} onDoubleClick={this.handleDoubleClickHeader.bind(this,i)}>
+        <div style={{padding: 5, height: '100%', display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}}>{d.name}</div>
         {sortc}
       </div>
     }
-    return def.map((d,i)=>{return {width:d.width, content:cont(d,i)}});
+    return this.state.headers.map((d,i)=>{return {width:d.width, content:cont(d,i)}});
   }
   renderRows(){
     const rows = this.state.data;
     return rows.map((row,i)=>row.map(
       (cell,j)=>{
         let inside;
-        switch(this.props.definition[j].type){ //here is where you create your own custom types
+        switch(this.state.headers[j].type){ //here is where you create your own custom types
           case 'id':
           inside = <div className={'cellContent'} onClick={this.handleClickCell.bind(this,{cell:cell, rownum:i})}
             style={{padding: '10px 5px', textAlign:'right', color:'DodgerBlue', fontWeight: 'bold', backgroundColor:'Lavender'}} title={cell}>{cell}</div>

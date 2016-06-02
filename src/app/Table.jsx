@@ -44,7 +44,7 @@ export default class Table extends React.Component {
                 </div>
                 {row.map((cell,j)=>{
                   if(j < frozen){
-                    return <Cell key={j+'p'} height={rowHeight} width={columns[j].width}><div className={'cellContent'}>&nbsp;</div></Cell>
+                    return <Cell key={j+'p'} height={rowHeight} width={columns[j].width} className={'placeholdercell'}><div className={'cellContent'}>&nbsp;</div></Cell>
                   }else{
                     return <Cell key={j} height={rowHeight} width={columns[j].width}>{cell}</Cell>
                   }

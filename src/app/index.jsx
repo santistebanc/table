@@ -18,7 +18,7 @@ class Index extends React.Component {
       headerHeight: 30,
       bodyHeight: 400,
       rowHeight: 38,
-      frozen:2,
+      frozen:1,
       pageSize: 25}};
   }
   render () {
