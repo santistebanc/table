@@ -175,7 +175,7 @@ export default class TableUIComponent extends React.Component {
             </select>{' entries'}</div>
           <div style={{display:'inline-block', padding:3, float:'left'}}>
             <button onClick={clickColumnsBut.bind(this)}>Columns</button></div>
-          <div style={{display:'inline-block', padding:5, float:'right',width: 110, textAlign: 'right'}}>{this.state.loading?
+          <div style={{display:'inline-block', padding:5, float:'right', textAlign: 'right'}}>{this.state.loading?
               <span><i className="fa fa-circle-o-notch fa-spin fa-fw"></i>{'Loading...'}</span>
               :
               'Ready'}
@@ -213,7 +213,7 @@ export default class TableUIComponent extends React.Component {
         sortc = <SortController mode={this.state.sortModes[i]} onChange={this.handleChangeSortMode.bind(this,i)} style={{height: this.state.headerHeight}}/>
       }
       return <div className={'headerContent'} title={d.name} onDoubleClick={this.handleDoubleClickHeader.bind(this,i)}>
-        <div style={{padding: 5, height: '100%', display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}}>{d.name}</div>
+        <div style={{padding: 5, float:'left',height: '100%', display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}}>{d.name}</div>
         {sortc}
       </div>
     }
