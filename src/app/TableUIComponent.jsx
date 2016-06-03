@@ -86,8 +86,14 @@ export default class TableUIComponent extends React.Component {
     const sumrelativewidths = headers.reduce((p,c)=>c.width.toString().indexOf('%')>-1?p+parseInt(c.width.split(' ')[0].slice(0,-1))/100:p,0)
     return headers.slice(0).map((header,i)=>{
       if(header.width.toString().indexOf('%')>-1){
-        const adjustedpercentage = (this.remainingwidth*parseInt(header.width.split(' ')[0].slice(0,-1))/100)/sumrelativewidths;
-        header.width = adjustedpercentage>parseInt(header.width.split(' ')[1] || 0)?adjustedpercentage:parseInt(header.width.split(' ')[1] || 0);
+        const adjustedwidth = (this.remainingwidth*parseInt(header.width.split(' ')[0].slice(0,-1))/100)/sumrelativewidths;
+        if(adjustedwidth<=parseInt(header.width.split(' ')[1] || 0)){
+          header.width = parseInt(header.width.split(' ')[1] || 0);
+        }else if(adjustedwidth>parseInt(header.width.split(' ')[2] || adjustedwidth)){
+          header.width = parseInt(header.width.split(' ')[2] || adjustedwidth);
+        }else{
+          header.width = adjustedwidth
+        }
       }
       return header;
     });
