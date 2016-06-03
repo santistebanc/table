@@ -12,13 +12,13 @@ export default class TableUIComponent extends React.Component {
     super(props);
     this.state = {data: [], headers: [],
       loading: true,
-      selectedOptionShow: props.pageSize,
+      selectedOptionShow: props.pageSize || 25,
       headerHeight: props.headerHeight,
       rowHeight: props.rowHeight,
       bodyHeight: props.bodyHeight,
       tableWidth: props.tableWidth,
       frozen: props.frozen,
-      pageSize: props.pageSize,
+      pageSize: props.pageSize || 25,
       currentpage: 0,
       rowsamount: 0,
       sortModes:props.definition.map(d=>{}),
@@ -41,9 +41,14 @@ export default class TableUIComponent extends React.Component {
 
         const selectionFiltered = (d,i)=>this.props.selection(d,i).filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
         const selecteddata = JSON.parse(newdata).map(selectionFiltered); //select the columns to display
-        this.state.loading = false; //data has been retrieved, no more loding
+        this.state.loading = false; //data has been retrieved, no more loading
         const unfixedheaders = this.props.definition.filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
-        this.state.headers = this.fixRelativeWidths(unfixedheaders);
+        const copyheads = unfixedheaders.slice(0).map(d=>{ //necessary to fully clone the this.props.definition and keep it unmodified
+          const obj = {};
+          Object.keys(d).forEach(k=>{obj[k] = d[k]});
+          return obj;
+        });
+        this.state.headers = this.fixRelativeWidths(copyheads);
         this.state.data = offlineFormating(selecteddata);
         this.state.rowsamount = sorteddata.length;
         this.setState(this.state);
@@ -78,10 +83,11 @@ export default class TableUIComponent extends React.Component {
   }
   fixRelativeWidths(headers){
     this.remainingwidth = this.state.tableWidth-headers.reduce((p,c)=>p+(isNaN(c.width)?0:c.width),0)-this.state.scrollBarWidth;
-    return headers.map((header,i)=>{
+    const sumrelativewidths = headers.reduce((p,c)=>c.width.toString().indexOf('%')>-1?p+parseInt(c.width.split(' ')[0].slice(0,-1))/100:p,0)
+    return headers.slice(0).map((header,i)=>{
       if(header.width.toString().indexOf('%')>-1){
-        console.log(header.width,this.remainingwidth*parseInt(header.width.slice(0,-1))/100)
-        header.width = this.remainingwidth>0?this.remainingwidth*parseInt(header.width.slice(0,-1))/100:0;
+        const adjustedpercentage = (this.remainingwidth*parseInt(header.width.split(' ')[0].slice(0,-1))/100)/sumrelativewidths;
+        header.width = adjustedpercentage>parseInt(header.width.split(' ')[1] || 0)?adjustedpercentage:parseInt(header.width.split(' ')[1] || 0);
       }
       return header;
     });
@@ -108,7 +114,7 @@ export default class TableUIComponent extends React.Component {
   handleChangeSelectedColumns(evt){
     const cols = evt.target.value;
     this.setState({selectedColumns: cols});
-    //this.getTableData({selectedColumns: cols,callback:()=>{}});
+    this.getTableData();
   }
   handleChangeSearchQuery(query){
     this.getTableData({currentpage:0,filterquery:query,callback:()=>{

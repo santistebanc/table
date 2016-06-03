@@ -7,10 +7,10 @@ class Index extends React.Component {
     super(props);
     let def = [{name:'Id', type:'id', width: 45},
     {name:'Flag', type:'flag', width: 50},
-    {name:'Country', type:'string', width: '20%'},
-    {name:'Official Name', type:'string', width: '50%'},
-    {name:'Capital', type:'string', width: '15%'},
-    {name:'Area', type:'areakm2', width: '15%'}];
+    {name:'Country', type:'string', width: '25% 100'},
+    {name:'Official Name', type:'string', width: '50% 150'},
+    {name:'Capital', type:'string', width: '25% 100'},
+    {name:'Area', type:'areakm2', width: 120}];
     this.state = {tabledata: {
       backend: '/countries/slow',
       definition: def,
