@@ -14,9 +14,9 @@ export default class SortController extends React.Component {
     e.stopPropagation();
   }
   render () {
-    const {mode, style} = this.props;
+    const {direction, style} = this.props;
     return <div className={'sortController'} style={style} onClick={this.handleClick.bind(this)} onDoubleClick={this.handleDoubleClick.bind(this)}>
-    {mode==1?<i className="fa fa-sort-asc"/>:mode==2?<i className="fa fa-sort-desc"/>:<i className="fa fa-sort nosort"/>}
+    {direction==1?<i className="fa fa-sort-asc"/>:direction==-1?<i className="fa fa-sort-desc"/>:<i className="fa fa-sort nosort"/>}
   </div>
   }
 }

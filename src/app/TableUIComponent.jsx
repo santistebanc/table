@@ -21,14 +21,15 @@ export default class TableUIComponent extends React.Component {
       pageSize: props.pageSize || 25,
       currentpage: 0,
       rowsamount: 0,
-      sortModes:props.definition.map(d=>{}),
+      sortColumn: props.definition.findIndex(d=>d.sort)>-1,
+      sortDirection: props.definition.findIndex(d=>d.sort)>-1 && props.definition[props.definition.findIndex(d=>d.sort)].sort,
       selectedColumns: props.definition.map((d,i)=>i),
       showColumnsCheckList: false,
       scrollBarWidth: getScrollbarWidth(),
       showSideScroll: true}
       this.callid = 0;
   }
-  getTableData({pageSize=this.state.pageSize, currentpage=this.state.currentpage, filterquery=this.state.filterquery, sortModes=this.state.sortModes, callback=()=>{}}){
+  getTableData({pageSize=this.state.pageSize, currentpage=this.state.currentpage, filterquery=this.state.filterquery, sortColumn=this.state.sortColumn, sortDirection=this.state.sortDirection, callback=()=>{}}){
     //here you would send to the server the query arguments for filtering, sorting, etc
     let sorteddata;
     this.callid ++;
@@ -41,16 +42,18 @@ export default class TableUIComponent extends React.Component {
 
         const selectionFiltered = (d,i)=>this.props.selection(d,i).filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
         const selecteddata = JSON.parse(newdata).map(selectionFiltered); //select the columns to display
-        this.state.loading = false; //data has been retrieved, no more loading
-        const unfixedheaders = this.props.definition.filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
-        const copyheads = unfixedheaders.slice(0).map(d=>{ //necessary to fully clone the this.props.definition and keep it unmodified
-          const obj = {};
+
+        const copyheads = this.props.definition.slice(0).map((d,i)=>{ //necessary to fully clone the this.props.definition and keep it unmodified
+          const obj = {id: i}; //id used to keep track of columns in case their order or visibility changes
           Object.keys(d).forEach(k=>{obj[k] = d[k]});
+          if(sortColumn == i) obj.sort = sortDirection; //add sort property
           return obj;
         });
-        this.state.headers = this.fixRelativeWidths(copyheads);
-        this.state.data = offlineFormating(selecteddata);
+        const unfixedheaders = copyheads.filter((a,x)=>this.state.selectedColumns.indexOf(x)>-1); //select only specified columns
+        this.state.headers = this.fixRelativeWidths(unfixedheaders);
+        this.state.data = offlineFormating.call(this,selecteddata);
         this.state.rowsamount = sorteddata.length;
+        this.state.loading = false; //data has been retrieved, no more loading
         this.setState(this.state);
         callback();
       }
@@ -58,8 +61,8 @@ export default class TableUIComponent extends React.Component {
 
     function offlineFormating(data){
       const filtereddata = filterquery?data.filter(containsquery):data;  //filter data according to search query
-      const dir = sortModes.indexOf(1)>-1?1:-1;
-      const field = sortModes.indexOf(1)>-1?sortModes.indexOf(1):sortModes.indexOf(2);
+      const field = this.state.headers.findIndex(h=>h.id==this.state.sortColumn)
+      const dir = this.state.sortDirection;
       if(field>-1){
         sorteddata = filtereddata.sort((a,b)=>{
           if (a[field] < b[field])
@@ -98,12 +101,9 @@ export default class TableUIComponent extends React.Component {
       return header;
     });
   }
-  handleChangeSortMode(c){
-    const newvalue = ((this.state.sortModes[c]||0)+1)%3;
-    this.state.sortModes = this.state.sortModes.map(s=>0);
-    this.state.sortModes[c] = newvalue;
-    this.setState({sortModes: this.state.sortModes});
-    this.getTableData({sortModes:this.state.sortModes});
+  handleChangeSortColumn(col, dir){
+    this.setState({sortColumn: col, sortDirection: dir});
+    this.getTableData({});
   }
   handleChangePage(page){
     this.getTableData({currentpage:page, callback:()=>{
@@ -120,7 +120,7 @@ export default class TableUIComponent extends React.Component {
   handleChangeSelectedColumns(evt){
     const cols = evt.target.value;
     this.setState({selectedColumns: cols});
-    this.getTableData();
+    this.getTableData({});
   }
   handleChangeSearchQuery(query){
     this.getTableData({currentpage:0,filterquery:query,callback:()=>{
@@ -210,7 +210,12 @@ export default class TableUIComponent extends React.Component {
     const cont = (d,i)=>{// this is where the headers can be customized
       let sortc;
       if(d.type!='flag'){
-        sortc = <SortController mode={this.state.sortModes[i]} onChange={this.handleChangeSortMode.bind(this,i)} style={{height: this.state.headerHeight}}/>
+        const columnissorting = d.id==this.state.sortColumn;
+        let nextdir = 1;
+        if(!columnissorting) nextdir = 1;
+        else if(this.state.sortDirection == 1) nextdir = -1;
+        else if(this.state.sortDirection == -1) nextdir = 0;
+        sortc = <SortController direction={columnissorting?this.state.sortDirection:0} onChange={this.handleChangeSortColumn.bind(this,d.id,nextdir)} style={{height: this.state.headerHeight}}/>
       }
       return <div className={'headerContent'} title={d.name} onDoubleClick={this.handleDoubleClickHeader.bind(this,i)}>
         <div style={{padding: 5, float:'left',height: '100%', display: 'inline-block', textOverflow: 'ellipsis',overflow: 'hidden',fontWeight: 'bold'}}>{d.name}</div>
